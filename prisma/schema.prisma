@@ -1,0 +1,425 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  role         UserRole
+  isActive     Boolean  @default(true) @map("is_active")
+  phoneNumber  String?  @map("phone_number")
+  profileImage String?  @map("profile_image")
+  timezone     String?  @default("UTC")
+  preferences  String?  // JSON string for user preferences
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  lecturer                Lecturer?
+  classGroupsAsRep        ClassGroup[] @relation("ClassRepRelation")
+  importJobs              ImportJob[]
+  auditLogs               AuditLog[]
+  sentNotifications       Notification[] @relation("SentNotifications")
+  receivedNotifications   Notification[] @relation("ReceivedNotifications")
+  verificationRequests    VerificationRequest[]
+  reports                 Report[]
+  scheduledReports        ScheduledReport[]
+
+  @@map("users")
+}
+
+model Lecturer {
+  id             String         @id @default(cuid())
+  userId         String         @unique @map("user_id")
+  employeeId     String         @unique @map("employee_id")
+  rank           String?
+  department     String?
+  employmentType String?        @map("employment_type")
+  specialization String?
+  officeLocation String?        @map("office_location")
+  officeHours    String?        @map("office_hours") // JSON string
+  bio            String?
+  qualifications String?        // JSON string
+  isVerified     Boolean        @default(false) @map("is_verified")
+  verificationDate DateTime?    @map("verification_date")
+
+  // Relations
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseSchedules    CourseSchedule[]
+  attendanceRecords  AttendanceRecord[]
+  virtualSessions    VirtualSession[]
+
+  @@map("lecturers")
+}
+
+model Programme {
+  id                String @id @default(cuid())
+  name              String @unique
+  level             String // PhD, MPhil, MBA, MSc, MA, LL.M.
+  durationSemesters Int    @map("duration_semesters")
+  description       String?
+  deliveryModes     String @map("delivery_modes") // JSON string of array
+  isActive          Boolean @default(true) @map("is_active")
+  coordinator       String? // User ID of programme coordinator
+  requirements      String? // JSON string of programme requirements
+  accreditation     String?
+  establishedYear   Int?    @map("established_year")
+
+  // Relations
+  courses     Course[]
+  classGroups ClassGroup[]
+
+  @@map("programmes")
+}
+
+model Course {
+  id            String  @id @default(cuid())
+  courseCode    String  @unique @map("course_code")
+  title         String
+  creditHours   Int     @map("credit_hours")
+  programmeId   String  @map("programme_id")
+  semesterLevel Int     @map("semester_level")
+  isElective    Boolean @default(false) @map("is_elective")
+  description   String?
+  prerequisites String? // JSON string of prerequisite course codes
+  learningOutcomes String? @map("learning_outcomes") // JSON string
+  assessmentMethods String? @map("assessment_methods") // JSON string
+  isActive      Boolean @default(true) @map("is_active")
+  virtualEnabled Boolean @default(false) @map("virtual_enabled")
+  hybridEnabled Boolean @default(false) @map("hybrid_enabled")
+
+  // Relations
+  programme       Programme        @relation(fields: [programmeId], references: [id])
+  courseSchedules CourseSchedule[]
+
+  @@map("courses")
+}
+
+model ClassGroup {
+  id           String @id @default(cuid())
+  name         String
+  programmeId  String @map("programme_id")
+  admissionYear Int   @map("admission_year")
+  deliveryMode String @map("delivery_mode")
+  classRepId   String? @map("class_rep_id")
+  studentCount Int?   @map("student_count")
+  isActive     Boolean @default(true) @map("is_active")
+  semester     String?
+  academicYear String? @map("academic_year")
+  groupType    String? @map("group_type") // "regular", "weekend", "evening"
+  communicationChannels String? @map("communication_channels") // JSON string
+
+  // Relations
+  programme       Programme        @relation(fields: [programmeId], references: [id])
+  classRep        User?            @relation("ClassRepRelation", fields: [classRepId], references: [id])
+  courseSchedules CourseSchedule[]
+
+  @@unique([name, programmeId, admissionYear])
+  @@map("class_groups")
+}
+
+model Building {
+  id           String  @id @default(cuid())
+  code         String  @unique
+  name         String
+  description  String?
+  address      String?
+  gpsLatitude  Float   @map("gps_latitude")
+  gpsLongitude Float   @map("gps_longitude")
+  totalFloors  Int?    @map("total_floors")
+
+  // Relations
+  classrooms Classroom[]
+
+  @@map("buildings")
+}
+
+model Classroom {
+  id                 String            @id @default(cuid())
+  roomCode           String            @unique @map("room_code")
+  name               String
+  buildingId         String            @map("building_id")
+  capacity           Int?
+  roomType           String?           @map("room_type")
+  equipmentList      String?           @map("equipment_list") // JSON string
+  gpsLatitude        Float?            @map("gps_latitude")
+  gpsLongitude       Float?            @map("gps_longitude")
+  availabilityStatus String            @default("available") @map("availability_status")
+  virtualLink        String?           @map("virtual_link")
+
+  // Relations
+  building        Building         @relation(fields: [buildingId], references: [id])
+  courseSchedules CourseSchedule[]
+
+  @@map("classrooms")
+}
+
+model CourseSchedule {
+  id           String      @id @default(cuid())
+  courseId     String      @map("course_id")
+  classGroupId String      @map("class_group_id")
+  lecturerId   String      @map("lecturer_id")
+  dayOfWeek    Int         @map("day_of_week") // 0-6 (Sunday-Saturday)
+  startTime    String      @map("start_time") // HH:MM format
+  endTime      String      @map("end_time")   // HH:MM format
+  classroomId  String?     @map("classroom_id")
+  sessionType  SessionType @map("session_type")
+
+  // Relations
+  course            Course             @relation(fields: [courseId], references: [id])
+  classGroup        ClassGroup         @relation(fields: [classGroupId], references: [id])
+  lecturer          Lecturer           @relation(fields: [lecturerId], references: [id])
+  classroom         Classroom?         @relation(fields: [classroomId], references: [id])
+  attendanceRecords AttendanceRecord[]
+  virtualSessions   VirtualSession[]
+
+  @@map("course_schedules")
+}
+
+model AttendanceRecord {
+  id                 String    @id @default(cuid())
+  lecturerId         String    @map("lecturer_id")
+  courseScheduleId   String    @map("course_schedule_id")
+  timestamp          DateTime
+  gpsLatitude        Float?    @map("gps_latitude")
+  gpsLongitude       Float?    @map("gps_longitude")
+  locationVerified   Boolean   @map("location_verified")
+  locationAccuracy   Float?    @map("location_accuracy")
+  method             String    // "onsite" or "virtual"
+  classRepVerified   Boolean?  @map("class_rep_verified")
+  classRepComment    String?   @map("class_rep_comment")
+  
+  // Virtual session tracking fields
+  sessionStartTime   DateTime? @map("session_start_time")
+  sessionEndTime     DateTime? @map("session_end_time")
+  sessionDuration    Int?      @map("session_duration") // in minutes
+  timeWindowVerified Boolean   @default(false) @map("time_window_verified")
+  meetingLinkVerified Boolean  @default(false) @map("meeting_link_verified")
+  sessionDurationMet Boolean   @default(false) @map("session_duration_met")
+  deviceFingerprint  String?   @map("device_fingerprint")
+  ipAddress          String?   @map("ip_address")
+  userAgent          String?   @map("user_agent")
+  deviceInfo         String?   @map("device_info") // JSON string
+  
+  // Enhanced tracking fields
+  engagementScore    Float?    @map("engagement_score")
+  virtualSessionId   String?   @map("virtual_session_id")
+  verificationConfidenceScore Float? @map("verification_confidence_score")
+  studentAttendanceData String? @map("student_attendance_data") // JSON string
+  sessionQualityRating Int?    @map("session_quality_rating")
+  technicalIssues    String?   @map("technical_issues") // JSON string
+
+  // Relations
+  lecturer        Lecturer       @relation(fields: [lecturerId], references: [id])
+  courseSchedule  CourseSchedule @relation(fields: [courseScheduleId], references: [id])
+  virtualSession  VirtualSession? @relation(fields: [virtualSessionId], references: [id])
+
+  @@map("attendance_records")
+}
+
+model ImportJob {
+  id                String    @id @default(cuid())
+  initiatedBy       String    @map("initiated_by")
+  jobType           String    @map("job_type")
+  status            String    // "pending", "processing", "completed", "failed"
+  fileName          String    @map("file_name")
+  summary           String?
+  recordsProcessed  Int?      @map("records_processed")
+  errorsCount       Int?      @map("errors_count")
+  errorLog          String?   @map("error_log") // JSON string
+  validationResults String?   @map("validation_results") // JSON string
+  startedAt         DateTime  @map("started_at")
+  completedAt       DateTime? @map("completed_at")
+  rollbackAvailable Boolean   @default(false) @map("rollback_available")
+
+  // Relations
+  initiatedByUser User @relation(fields: [initiatedBy], references: [id])
+
+  @@map("import_jobs")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  action     String
+  targetType String   @map("target_type")
+  targetId   String   @map("target_id")
+  metadata   String?  // JSON string
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  sessionId  String?  @map("session_id")
+  riskScore  Float?   @map("risk_score")
+  dataHash   String?  @map("data_hash")
+  timestamp  DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+// New models for enhanced features
+model VirtualSession {
+  id                String    @id @default(cuid())
+  lecturerId        String    @map("lecturer_id")
+  courseScheduleId  String    @map("course_schedule_id")
+  meetingLink       String    @map("meeting_link")
+  meetingId         String?   @map("meeting_id")
+  platform          String    // "zoom", "teams", "meet", "webex"
+  sessionPassword   String?   @map("session_password")
+  recordingEnabled  Boolean   @default(false) @map("recording_enabled")
+  recordingUrl      String?   @map("recording_url")
+  maxParticipants   Int?      @map("max_participants")
+  actualParticipants Int?     @map("actual_participants")
+  sessionNotes      String?   @map("session_notes")
+  technicalIssues   String?   @map("technical_issues") // JSON string
+  qualityRating     Int?      @map("quality_rating")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  lecturer          Lecturer           @relation(fields: [lecturerId], references: [id])
+  courseSchedule    CourseSchedule     @relation(fields: [courseScheduleId], references: [id])
+  attendanceRecords AttendanceRecord[]
+
+  @@map("virtual_sessions")
+}
+
+model VerificationRequest {
+  id               String    @id @default(cuid())
+  requesterId      String    @map("requester_id")
+  lecturerId       String    @map("lecturer_id")
+  courseScheduleId String    @map("course_schedule_id")
+  attendanceRecordId String? @map("attendance_record_id")
+  requestType      String    // "attendance_verification", "session_quality", "technical_issue"
+  status           String    @default("pending") // "pending", "approved", "rejected", "escalated"
+  priority         String    @default("normal") // "low", "normal", "high", "urgent"
+  description      String
+  evidence         String?   // JSON string for evidence/attachments
+  response         String?
+  reviewedBy       String?   @map("reviewed_by")
+  reviewedAt       DateTime? @map("reviewed_at")
+  escalatedTo      String?   @map("escalated_to")
+  escalatedAt      DateTime? @map("escalated_at")
+  resolutionNotes  String?   @map("resolution_notes")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  requester User @relation(fields: [requesterId], references: [id])
+
+  @@map("verification_requests")
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  senderId    String?   @map("sender_id")
+  recipientId String    @map("recipient_id")
+  type        String    // "email", "sms", "push", "in_app"
+  category    String    // "attendance", "verification", "system", "reminder"
+  title       String
+  message     String
+  data        String?   // JSON string for additional data
+  priority    String    @default("normal") // "low", "normal", "high", "urgent"
+  status      String    @default("pending") // "pending", "sent", "delivered", "read", "failed"
+  scheduledFor DateTime? @map("scheduled_for")
+  sentAt      DateTime? @map("sent_at")
+  readAt      DateTime? @map("read_at")
+  retryCount  Int       @default(0) @map("retry_count")
+  errorMessage String?  @map("error_message")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  sender    User? @relation("SentNotifications", fields: [senderId], references: [id])
+  recipient User  @relation("ReceivedNotifications", fields: [recipientId], references: [id])
+
+  @@map("notifications")
+}
+
+model SystemSettings {
+  id          String   @id @default(cuid())
+  category    String   // "geolocation", "virtual_sessions", "notifications", "security"
+  key         String
+  value       String   // JSON string for complex values
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([category, key])
+  @@map("system_settings")
+}
+
+model Report {
+  id          String    @id @default(cuid())
+  generatedBy String    @map("generated_by")
+  title       String
+  type        String    // "attendance", "verification", "analytics", "audit"
+  format      String    // "pdf", "excel", "csv", "json"
+  parameters  String?   // JSON string for report parameters
+  data        String?   // JSON string for report data
+  filePath    String?   @map("file_path")
+  fileSize    Int?      @map("file_size")
+  status      String    @default("generating") // "generating", "completed", "failed"
+  errorMessage String?  @map("error_message")
+  expiresAt   DateTime? @map("expires_at")
+  downloadCount Int     @default(0) @map("download_count")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  generator User @relation(fields: [generatedBy], references: [id])
+
+  @@map("reports")
+}
+
+model ScheduledReport {
+  id          String   @id @default(cuid())
+  createdBy   String   @map("created_by")
+  name        String
+  description String?
+  reportType  String   @map("report_type")
+  parameters  String   // JSON string for report parameters
+  schedule    String   // Cron expression
+  recipients  String   // JSON array of recipient emails
+  format      String   // "pdf", "excel", "csv"
+  isActive    Boolean  @default(true) @map("is_active")
+  lastRun     DateTime? @map("last_run")
+  nextRun     DateTime? @map("next_run")
+  runCount    Int      @default(0) @map("run_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  creator User @relation(fields: [createdBy], references: [id])
+
+  @@map("scheduled_reports")
+}
+
+enum UserRole {
+  ADMIN
+  COORDINATOR
+  LECTURER
+  CLASS_REP
+}
+
+enum SessionType {
+  LECTURE
+  SEMINAR
+  LAB
+  VIRTUAL
+  HYBRID
+}

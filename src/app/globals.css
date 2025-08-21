@@ -1,8 +1,14 @@
 @import "tailwindcss";
+@import "../styles/mobile.css";
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111827; /* Enhanced contrast - darker gray-900 */
+  --input-background: #ffffff;
+  --input-border: #d1d5db; /* gray-300 */
+  --input-border-focus: #4f46e5; /* indigo-600 */
+  --input-text: #111827; /* gray-900 */
+  --placeholder-text: #6b7280; /* gray-500 */
 }
 
 @theme inline {
@@ -12,10 +18,16 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Force light theme - override dark mode preferences */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff; /* Force white background */
+    --foreground: #111827; /* Force dark text */
+    --input-background: #ffffff; /* Force white input background */
+    --input-border: #d1d5db; /* gray-300 */
+    --input-border-focus: #4f46e5; /* indigo-600 */
+    --input-text: #111827; /* Force dark input text */
+    --placeholder-text: #6b7280; /* gray-500 */
   }
 }
 
@@ -23,4 +35,145 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Enhanced form input contrast */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+input[type="date"],
+input[type="time"],
+textarea,
+select {
+  background-color: var(--input-background) !important;
+  border-color: var(--input-border) !important;
+  color: var(--input-text) !important;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+input[type="search"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--input-border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--placeholder-text) !important;
+  opacity: 1 !important;
+}
+
+/* Enhanced dropdown option contrast */
+select option {
+  background-color: var(--input-background) !important;
+  color: var(--input-text) !important;
+}
+
+/* Enhanced button contrast */
+.btn-primary {
+  background-color: #4f46e5 !important; /* indigo-600 */
+  color: #ffffff !important;
+  border-color: #4f46e5 !important;
+}
+
+.btn-primary:hover {
+  background-color: #4338ca !important; /* indigo-700 */
+  border-color: #4338ca !important;
+}
+
+.btn-secondary {
+  background-color: #ffffff !important;
+  color: #374151 !important; /* gray-700 */
+  border-color: #d1d5db !important; /* gray-300 */
+}
+
+.btn-secondary:hover {
+  background-color: #f9fafb !important; /* gray-50 */
+  color: #111827 !important; /* gray-900 */
+}
+
+/* Enhanced text contrast for better readability */
+.text-enhanced {
+  color: var(--foreground) !important;
+}
+
+.text-muted {
+  color: #6b7280 !important; /* gray-500 */
+}
+
+/* Force light theme text colors */
+@media (prefers-color-scheme: dark) {
+  .text-muted {
+    color: #6b7280 !important; /* gray-500 - keep consistent with light theme */
+  }
+  
+  /* Ensure headings are dark */
+  h1, h2, h3, h4, h5, h6 {
+    color: #111827 !important;
+  }
+  
+  /* Ensure paragraphs and text elements are dark */
+  p, span, div:not([class*="bg-"]):not([class*="text-"]) {
+    color: #111827 !important;
+  }
+  
+  /* Ensure labels are dark */
+  label {
+    color: #374151 !important;
+  }
+  
+  /* Ensure specific text classes remain dark */
+  .text-gray-900, .text-gray-800, .text-gray-700 {
+    color: #111827 !important;
+  }
+  
+  .text-gray-600, .text-gray-500 {
+    color: #6b7280 !important;
+  }
+  
+  /* Ensure white backgrounds for cards and containers */
+  .bg-white {
+    background-color: #ffffff !important;
+  }
+  
+  /* Ensure body background is white */
+  body {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+  }
+  
+  /* Ensure cards and containers have proper styling */
+  .card, [class*="card"] {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+  }
+  
+  /* Ensure buttons maintain readability */
+  button {
+    color: inherit !important;
+  }
+  
+  /* Ensure input fields are readable */
+  input, textarea, select {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    border-color: #d1d5db !important;
+  }
+  
+  /* Ensure navigation elements are visible */
+  nav, .nav {
+    color: #111827 !important;
+  }
 }
