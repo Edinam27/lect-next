@@ -12,7 +12,8 @@
     "test:coverage": "jest --coverage",
     "test:geolocation": "jest src/lib/__tests__/geolocation.test.ts",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "npx prisma db push --force-reset && npm run db:seed"
+    "db:reset": "npx prisma db push --force-reset && npm run db:seed",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
