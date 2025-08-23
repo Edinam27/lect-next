@@ -8,13 +8,3 @@ export { default as LecturerPerformanceChart } from './LecturerPerformanceChart'
 export { default as CourseAttendanceChart } from './CourseAttendanceChart';
 export { default as AttendanceHeatmapChart } from './AttendanceHeatmapChart';
 export { default as AnalyticsDashboard } from './AnalyticsDashboard';
-
-// Re-export for convenience
-export {
-  AttendanceTrendsChart,
-  VerificationStatusChart,
-  LecturerPerformanceChart,
-  CourseAttendanceChart,
-  AttendanceHeatmapChart,
-  AnalyticsDashboard,
-};

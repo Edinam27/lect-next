@@ -382,3 +382,6 @@ export const AUDIT_ACTIONS = {
 } as const
 
 export type AuditAction = typeof AUDIT_ACTIONS[keyof typeof AUDIT_ACTIONS]
+
+// Export auditService instance
+export const auditService = AuditService
