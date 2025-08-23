@@ -18,7 +18,7 @@ interface AttendanceTrendsChartProps {
   showLegend?: boolean;
 }
 
-export const AttendanceTrendsChart: React.FC<AttendanceTrendsChartProps> = ({
+const AttendanceTrendsChart: React.FC<AttendanceTrendsChartProps> = ({
   data,
   className = '',
   height = 400,

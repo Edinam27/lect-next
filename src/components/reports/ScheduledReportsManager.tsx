@@ -16,7 +16,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui'
+} from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
