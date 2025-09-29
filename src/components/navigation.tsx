@@ -74,9 +74,20 @@ export function Navigation() {
   const { data: session } = useSession()
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
   if (!session?.user) {
     return null
+  }
+
+  const handleSignOut = async () => {
+    if (isSigningOut) return // Prevent multiple clicks
+    setIsSigningOut(true)
+    try {
+      await signOut()
+    } catch (error) {
+      setIsSigningOut(false) // Reset on error
+    }
   }
 
   const userRole = session.user.role
@@ -115,7 +126,7 @@ export function Navigation() {
             </div>
           </div>
           
-          {/* Desktop User Info & Sign Out */}
+          {/* Desktop User Info & Actions */}
           <div className="hidden md:flex md:items-center md:space-x-4">
             <div className="flex-shrink-0 hidden lg:block">
               <span className="text-sm text-enhanced truncate max-w-xs">
@@ -127,11 +138,18 @@ export function Navigation() {
                 {session.user.name?.split(' ')[0]}
               </span>
             </div>
-            <button
-              onClick={() => signOut()}
-              className="btn-secondary py-2 px-3 lg:px-4 rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap"
+            <Link
+              href="/dashboard/profile"
+              className="btn-secondary py-2 px-3 lg:px-4 rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap hover:bg-gray-50"
             >
-              Sign out
+              Profile
+            </Link>
+            <button
+              onClick={handleSignOut}
+              disabled={isSigningOut}
+              className="btn-secondary py-2 px-3 lg:px-4 rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSigningOut ? 'Signing out...' : 'Sign out'}
             </button>
           </div>
 
@@ -221,14 +239,22 @@ export function Navigation() {
               </div>
             </div>
             <div className="mt-3 space-y-1">
+              <Link
+                href="/dashboard/profile"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+              >
+                Profile
+              </Link>
               <button
                 onClick={() => {
-                  signOut()
+                  handleSignOut()
                   setIsMobileMenuOpen(false)
                 }}
-                className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                disabled={isSigningOut}
+                className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign out
+                {isSigningOut ? 'Signing out...' : 'Sign out'}
               </button>
             </div>
           </div>
